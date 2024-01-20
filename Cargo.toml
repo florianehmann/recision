@@ -1,0 +1,18 @@
+[package]
+name = "recision"
+version = "0.1.0"
+edition = "2021"
+desciption = "Multi-Project Decision Helper"
+readme = "README.md"
+repository = "https://github.com/florianehmann/recision"
+keywords = ["cli", "decision"]
+categories = ["command-line-utilities"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = 'abort'
+strip = 'symbols'
+
+[dependencies]
