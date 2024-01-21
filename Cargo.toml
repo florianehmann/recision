@@ -2,7 +2,8 @@
 name = "recision"
 version = "0.1.0"
 edition = "2021"
-desciption = "Multi-Project Decision Helper"
+description = "Multi-Project Decision Helper"
+authors = ["Florian Ehmann"]
 readme = "README.md"
 repository = "https://github.com/florianehmann/recision"
 keywords = ["cli", "decision"]
@@ -12,7 +13,9 @@ categories = ["command-line-utilities"]
 opt-level = 3
 lto = true
 codegen-units = 1
-panic = 'abort'
-strip = 'symbols'
+panic = 'unwind'
+strip = 'debuginfo'
 
 [dependencies]
+clap = "4.0"
+human-panic = "1.2.3"
