@@ -19,3 +19,8 @@ strip = 'debuginfo'
 [dependencies]
 clap = "4.0"
 human-panic = "1.2.3"
+
+[dev-dependencies]
+anyhow = "1.0.79"
+assert_cmd = "2.0.13"
+predicates = "3.1.0"
