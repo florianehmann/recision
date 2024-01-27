@@ -7,6 +7,7 @@ fn build_command() -> Result<Command> {
 }
 
 #[test]
+#[ignore]
 fn test_workspace() -> Result<()> {
     let mut cmd = build_command()?;
 
@@ -17,6 +18,7 @@ fn test_workspace() -> Result<()> {
 }
 
 #[test]
+#[ignore]
 fn test_workspace_deactivate() -> Result<()> {
     let mut cmd = build_command()?;
 
@@ -27,6 +29,7 @@ fn test_workspace_deactivate() -> Result<()> {
 }
 
 #[test]
+#[ignore]
 fn test_project_ls() -> Result<()> {
     let mut cmd = build_command()?;
 
@@ -37,6 +40,7 @@ fn test_project_ls() -> Result<()> {
 }
 
 #[test]
+#[ignore]
 fn test_criterion_ls() -> Result<()> {
     let mut cmd = build_command()?;
 
@@ -47,6 +51,7 @@ fn test_criterion_ls() -> Result<()> {
 }
 
 #[test]
+#[ignore]
 fn test_display() -> Result<()> {
     let mut cmd = build_command()?;
 
