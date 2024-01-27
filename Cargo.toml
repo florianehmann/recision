@@ -17,6 +17,7 @@ panic = 'unwind'
 strip = 'debuginfo'
 
 [dependencies]
+anyhow = "1.0.79"
 clap = "4.0"
 human-panic = "1.2.3"
 
