@@ -6,7 +6,9 @@ mod cli;
 mod subcommands;
 
 use cli::build_cli;
-use subcommands::{run_criterion, run_display, run_priority_set, run_project, run_weight, run_workspace};
+use subcommands::{
+    run_criterion, run_display, run_priority_set, run_project, run_weight, run_workspace,
+};
 
 fn main() -> Result<()> {
     setup_panic!(Metadata {
