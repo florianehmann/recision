@@ -58,3 +58,23 @@ pub fn run_project(matches: &ArgMatches) -> Result<()> {
         _ => unreachable!("no default behavior for project subcommand"),
     }
 }
+
+#[allow(unused)]
+pub fn run_criterion(matches: &ArgMatches) -> Result<()> {
+    todo!();
+}
+
+#[allow(unused)]
+pub fn run_priority_set(matches: &ArgMatches) -> Result<()> {
+    todo!();
+}
+
+#[allow(unused)]
+pub fn run_weight(matches: &ArgMatches) -> Result<()> {
+    todo!();
+}
+
+#[allow(unused)]
+pub fn run_display(matches: &ArgMatches) -> Result<()> {
+    todo!();
+}

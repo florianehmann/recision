@@ -6,7 +6,7 @@ mod cli;
 mod subcommands;
 
 use cli::build_cli;
-use subcommands::{run_project, run_workspace};
+use subcommands::{run_criterion, run_display, run_priority_set, run_project, run_weight, run_workspace};
 
 fn main() -> Result<()> {
     setup_panic!(Metadata {
@@ -28,7 +28,11 @@ fn run(matches: &ArgMatches) -> Result<()> {
     match matches.subcommand() {
         Some(("workspace", submatches)) => run_workspace(&submatches)?,
         Some(("project", submatches)) => run_project(&submatches)?,
-        _ => todo!("valid command isn't handled"),
+        Some(("criterion", submatches)) => run_criterion(&submatches)?,
+        Some(("priority-set", submatches)) => run_priority_set(&submatches)?,
+        Some(("weight", submatches)) => run_weight(&submatches)?,
+        Some(("display", submatches)) => run_display(&submatches)?,
+        _ => unreachable!("valid command isn't handled"),
     }
 
     Ok(())
