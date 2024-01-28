@@ -21,6 +21,7 @@ anyhow = "1.0.79"
 clap = "4.0"
 dirs = "5.0.1"
 human-panic = "1.2.3"
+mockall = "0.12.1"
 
 [dev-dependencies]
 anyhow = "1.0.79"
