@@ -1,12 +1,52 @@
 use std::error::Error;
 use std::fmt::{self, Display, Formatter};
-use std::fs;
+use std::fs::{self, remove_file, File};
+use std::io::{Read, Write};
 use std::path::PathBuf;
 
 use anyhow::Result;
-use config::Config;
 use dirs::config_dir;
 use mockall::automock;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Config {
+    active_workspace: Option<PathBuf>,
+    active_priority_set: Option<usize>,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        return Config {
+            active_workspace: None,
+            active_priority_set: None,
+        }
+    }
+}
+
+impl Config {
+    fn write_to_file(&self, path: PathBuf) -> Result<()> {
+
+        if path.exists() {
+            remove_file(path.clone())?;
+        }
+
+        let toml_string = toml::to_string_pretty(self)?;
+        let mut file = File::create(path)?;
+        file.write_all(toml_string.as_bytes())?;
+
+        return Ok(())
+    }
+
+    fn read_from_file(path: PathBuf) -> Result<Self> {
+        let mut file = File::open(path)?;
+        let mut toml_string = String::new();
+        file.read_to_string(&mut toml_string)?;
+        let config = toml::from_str(toml_string.as_str())?;
+
+        return Ok(config)
+    }
+}
 
 #[derive(Debug)]
 pub struct ConfigError {
@@ -51,25 +91,18 @@ fn get_config_file_path() -> Result<PathBuf> {
     return Ok(dir);
 }
 
-fn get_configuration() -> Result<()> {
+fn get_configuration() -> Result<Config> {
     let path = get_config_file_path()?;
 
-    // TODO instead of creating a new empty file write serizalized default config
     if !path.exists() {
         fs::create_dir_all(path.parent().expect("config dir is not root"))?;
-        fs::File::create(path.clone())?;
+        let default_config = Config::default();
+        default_config.write_to_file(path.clone())?;
     }
 
-    let config = Config::builder()
-        .add_source(config::File::with_name(
-            path.to_str().expect("path should be valid unicode"),
-        ))
-        .build()
-        .expect("file should exist by now");
+    let config = Config::read_from_file(path)?;
 
-    println!("{:?}", config);
-
-    return Ok(());
+    return Ok(config);
 }
 
 #[cfg(test)]
@@ -104,11 +137,12 @@ mod tests {
     #[test]
     fn test_get_config_file_path() {
         let path = get_config_file_path();
-        println!("{:?}", path);
+        assert!(path.is_ok());
     }
 
     #[test]
     fn test_get_configuration() {
-        let _ = get_configuration();
+        let result = get_configuration();
+        assert!(result.is_ok());
     }
 }
