@@ -83,16 +83,16 @@ fn get_config_dir(provider: &dyn ConfigDirProvider) -> Result<PathBuf> {
     );
 }
 
-fn get_config_file_path() -> Result<PathBuf> {
-    let dir = get_config_dir(&(DefaultConfigDirProvider {}))?
+fn get_config_file_path(config_dir_provider: &dyn ConfigDirProvider) -> Result<PathBuf> {
+    let dir = get_config_dir(config_dir_provider)?
         .join("recision")
         .join("config.toml");
 
     return Ok(dir);
 }
 
-fn get_configuration() -> Result<Config> {
-    let path = get_config_file_path()?;
+fn get_configuration(config_dir_provider: &dyn ConfigDirProvider) -> Result<Config> {
+    let path = get_config_file_path(config_dir_provider)?;
 
     if !path.exists() {
         fs::create_dir_all(path.parent().expect("config dir is not root"))?;
@@ -109,6 +109,22 @@ fn get_configuration() -> Result<Config> {
 mod tests {
     use super::*;
 
+    fn get_test_config_dir_provider() -> impl ConfigDirProvider {
+        let mut test_config_dir_provider = MockConfigDirProvider::new();
+        test_config_dir_provider
+            .expect_get_config_dir()
+            .return_const(std::env::temp_dir());
+
+        let config_file = get_config_file_path(&test_config_dir_provider)
+            .expect("temp dir should exist");
+        if config_file.exists() {
+            fs::remove_file(config_file)
+                .expect("temp config file should be deletable");
+        }
+
+        return test_config_dir_provider;
+    }
+
     #[test]
     fn test_get_real_config_dir() {
         get_config_dir(&DefaultConfigDirProvider {}).unwrap();
@@ -116,11 +132,7 @@ mod tests {
 
     #[test]
     fn test_get_mock_config_dir() {
-        let mut provider = MockConfigDirProvider::new();
-        provider
-            .expect_get_config_dir()
-            .return_const(PathBuf::from("/tmp/config"));
-
+        let provider = get_test_config_dir_provider();
         get_config_dir(&provider).unwrap();
     }
 
@@ -136,13 +148,15 @@ mod tests {
 
     #[test]
     fn test_get_config_file_path() {
-        let path = get_config_file_path();
+        let provider = get_test_config_dir_provider();
+        let path = get_config_file_path(&provider);
         assert!(path.is_ok());
     }
 
     #[test]
     fn test_get_configuration() {
-        let result = get_configuration();
+        let provider = get_test_config_dir_provider();
+        let result = get_configuration(&provider);
         assert!(result.is_ok());
     }
 }
