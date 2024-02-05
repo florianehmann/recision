@@ -1,16 +1,18 @@
+use std::path::PathBuf;
+
 use anyhow::Result;
 use clap::ArgMatches;
+
+mod workspace;
 
 use crate::config::{get_configuration, DefaultConfigDirProvider};
 
 pub fn run_workspace(matches: &ArgMatches) -> Result<()> {
-    #[allow(unused_variables)]
-    let config = get_configuration(&DefaultConfigDirProvider {});
+    let mut config = get_configuration(&DefaultConfigDirProvider {})?;
     match matches.subcommand() {
         Some(("activate", argmatches)) => {
-            let dir = argmatches.get_one::<String>("DIR").expect("required");
-            println!("Activating workspace {dir}");
-            todo!();
+            let dir = PathBuf::from(argmatches.get_one::<String>("DIR").expect("required"));
+            workspace::activate(dir, &mut config)?;
         }
         Some(("new", argmatches)) => {
             let dir = argmatches.get_one::<String>("DIR").expect("required");
@@ -22,10 +24,11 @@ pub fn run_workspace(matches: &ArgMatches) -> Result<()> {
             todo!();
         }
         _ => {
-            println!("Currently active workspace:");
-            todo!();
+            workspace::status(&mut config)?;
         }
     }
+
+    Ok(())
 }
 
 pub fn run_project(matches: &ArgMatches) -> Result<()> {

@@ -4,7 +4,7 @@ use std::fs::{self, remove_file, File};
 use std::io::{Read, Write};
 use std::path::PathBuf;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use dirs::config_dir;
 use mockall::automock;
 use serde::{Deserialize, Serialize};
@@ -20,13 +20,12 @@ impl Default for Config {
         return Config {
             active_workspace: None,
             active_priority_set: None,
-        }
+        };
     }
 }
 
 impl Config {
     fn write_to_file(&self, path: PathBuf) -> Result<()> {
-
         if path.exists() {
             remove_file(path.clone())?;
         }
@@ -35,16 +34,42 @@ impl Config {
         let mut file = File::create(path)?;
         file.write_all(toml_string.as_bytes())?;
 
-        return Ok(())
+        return Ok(());
     }
 
     fn read_from_file(path: PathBuf) -> Result<Self> {
-        let mut file = File::open(path)?;
+        let mut file = File::open(path.clone())?;
         let mut toml_string = String::new();
         file.read_to_string(&mut toml_string)?;
-        let config = toml::from_str(toml_string.as_str())?;
+        let config = toml::from_str(toml_string.as_str()).with_context(|| {
+            format!(
+                "Unable to parse the contents of the configuration file '{}'",
+                path.to_str().unwrap()
+            )
+        })?;
 
-        return Ok(config)
+        return Ok(config);
+    }
+
+    pub fn get_workspace(&self) -> &Option<PathBuf> {
+        return &self.active_workspace;
+    }
+
+    pub fn set_workspace(&mut self, path: PathBuf) -> Result<()> {
+        if !path.exists() {
+            return Err(ConfigError {
+                message: format!(
+                    "workspace directory '{}' does not exist",
+                    path.to_str().unwrap()
+                )
+                .to_string(),
+            }.into());
+        }
+
+        self.active_workspace = Some(path);
+        self.write_to_file(get_config_file_path(&DefaultConfigDirProvider {})?)?;
+
+        return Ok(())
     }
 }
 
@@ -55,7 +80,7 @@ pub struct ConfigError {
 
 impl Display for ConfigError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "ConfigError: {}", self.message)
+        write!(f, "{}", self.message)
     }
 }
 
@@ -115,11 +140,10 @@ mod tests {
             .expect_get_config_dir()
             .return_const(std::env::temp_dir());
 
-        let config_file = get_config_file_path(&test_config_dir_provider)
-            .expect("temp dir should exist");
+        let config_file =
+            get_config_file_path(&test_config_dir_provider).expect("temp dir should exist");
         if config_file.exists() {
-            fs::remove_file(config_file)
-                .expect("temp config file should be deletable");
+            fs::remove_file(config_file).expect("temp config file should be deletable");
         }
 
         return test_config_dir_provider;
