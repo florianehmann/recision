@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::fmt::{self, Display, Formatter};
 use std::fs::{self, remove_file, File};
-use std::io::{Read, Write};
+use std::io::{self, Read, Write};
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};
@@ -57,19 +57,20 @@ impl Config {
 
     pub fn set_workspace(&mut self, path: PathBuf) -> Result<()> {
         if !path.exists() {
-            return Err(ConfigError {
-                message: format!(
+            return Err(io::Error::new(
+                io::ErrorKind::NotFound,
+                format!(
                     "workspace directory '{}' does not exist",
                     path.to_str().unwrap()
-                )
-                .to_string(),
-            }.into());
+                ),
+            )
+            .into());
         }
 
         self.active_workspace = Some(path);
         self.write_to_file(get_config_file_path(&DefaultConfigDirProvider {})?)?;
 
-        return Ok(())
+        return Ok(());
     }
 }
 
