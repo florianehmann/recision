@@ -3,6 +3,7 @@ use clap::ArgMatches;
 use human_panic::setup_panic;
 
 mod cli;
+mod config;
 mod subcommands;
 
 use cli::build_cli;

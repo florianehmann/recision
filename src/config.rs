@@ -10,7 +10,7 @@ use mockall::automock;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Config {
+pub struct Config {
     active_workspace: Option<PathBuf>,
     active_priority_set: Option<usize>,
 }
@@ -62,11 +62,11 @@ impl Display for ConfigError {
 impl Error for ConfigError {}
 
 #[automock]
-trait ConfigDirProvider {
+pub trait ConfigDirProvider {
     fn get_config_dir(&self) -> Option<PathBuf>;
 }
 
-struct DefaultConfigDirProvider;
+pub struct DefaultConfigDirProvider;
 
 impl ConfigDirProvider for DefaultConfigDirProvider {
     fn get_config_dir(&self) -> Option<PathBuf> {
@@ -91,7 +91,7 @@ fn get_config_file_path(config_dir_provider: &dyn ConfigDirProvider) -> Result<P
     return Ok(dir);
 }
 
-fn get_configuration(config_dir_provider: &dyn ConfigDirProvider) -> Result<Config> {
+pub fn get_configuration(config_dir_provider: &dyn ConfigDirProvider) -> Result<Config> {
     let path = get_config_file_path(config_dir_provider)?;
 
     if !path.exists() {

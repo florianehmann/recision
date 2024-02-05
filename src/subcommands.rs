@@ -1,7 +1,11 @@
 use anyhow::Result;
 use clap::ArgMatches;
 
+use crate::config::{get_configuration, DefaultConfigDirProvider};
+
 pub fn run_workspace(matches: &ArgMatches) -> Result<()> {
+    #[allow(unused_variables)]
+    let config = get_configuration(&DefaultConfigDirProvider {});
     match matches.subcommand() {
         Some(("activate", argmatches)) => {
             let dir = argmatches.get_one::<String>("DIR").expect("required");
