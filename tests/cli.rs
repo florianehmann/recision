@@ -1,31 +1,15 @@
 use anyhow::Result;
-use assert_cmd::Command;
 
-fn build_command() -> Result<Command> {
-    let cmd = Command::cargo_bin::<String>(env!("CARGO_PKG_NAME").into())?;
-    Ok(cmd)
-}
+mod common;
 
-#[test]
-#[ignore]
-fn test_workspace() -> Result<()> {
-    let mut cmd = build_command()?;
+use common::{build_command, test_flag_is_set};
 
-    cmd.arg("workspace");
-    cmd.assert().success();
-
-    Ok(())
-}
+use crate::common::set_test_flag;
 
 #[test]
-#[ignore]
-fn test_workspace_deactivate() -> Result<()> {
-    let mut cmd = build_command()?;
-
-    cmd.arg("workspace").arg("deactivate");
-    cmd.assert().success();
-
-    Ok(())
+fn test_test_flag_set() {
+    set_test_flag();
+    assert_eq!(true, test_flag_is_set());
 }
 
 #[test]

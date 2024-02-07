@@ -5,6 +5,7 @@ use human_panic::setup_panic;
 mod cli;
 mod config;
 mod subcommands;
+mod test_utils;
 
 use cli::build_cli;
 use subcommands::{
