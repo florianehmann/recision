@@ -1,15 +1,13 @@
-use std::env;
+use std::{env, path::PathBuf};
 
-pub const TEST_FLAG: &str = "RECISION_INTEGRATION_TEST";
+use anyhow::Result;
 
-pub fn test_flag_is_set() -> bool {
-    if env::var(TEST_FLAG).is_err() {
-        return false
-    }
+pub const TEST_CONFIG_DIR: &str = "RECISION_TEST_CONFIG_DIR";
 
-    if env::var(TEST_FLAG).unwrap().trim() != "1" {
-        return false
-    }
+pub fn test_config_dir_is_set() -> bool {
+    return !env::var(TEST_CONFIG_DIR).is_err()
+}
 
-    return true
+pub fn config_dir() -> Result<PathBuf> {
+    return Ok(PathBuf::from(env::var(TEST_CONFIG_DIR)?));
 }

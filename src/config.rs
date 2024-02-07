@@ -9,6 +9,8 @@ use dirs::config_dir;
 use mockall::automock;
 use serde::{Deserialize, Serialize};
 
+use crate::test_utils;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     active_workspace: Option<PathBuf>,
@@ -96,6 +98,12 @@ pub struct DefaultConfigDirProvider;
 
 impl ConfigDirProvider for DefaultConfigDirProvider {
     fn get_config_dir(&self) -> Option<PathBuf> {
+        if test_utils::test_config_dir_is_set() {
+            return Some(
+                test_utils::config_dir()
+                    .expect(format!("{} not set", test_utils::TEST_CONFIG_DIR).as_str()),
+            );
+        }
         return config_dir();
     }
 }
@@ -123,10 +131,12 @@ pub fn get_configuration(config_dir_provider: &dyn ConfigDirProvider) -> Result<
     if !path.exists() {
         fs::create_dir_all(path.parent().expect("config dir is not root"))?;
         let default_config = Config::default();
-        default_config.write_to_file(path.clone())?;
+        default_config
+            .write_to_file(path.clone())
+            .context("error while creating new config file")?;
     }
 
-    let config = Config::read_from_file(path)?;
+    let config = Config::read_from_file(path).context("error while reading config file")?;
 
     return Ok(config);
 }
@@ -140,12 +150,6 @@ mod tests {
         test_config_dir_provider
             .expect_get_config_dir()
             .return_const(std::env::temp_dir());
-
-        let config_file =
-            get_config_file_path(&test_config_dir_provider).expect("temp dir should exist");
-        if config_file.exists() {
-            fs::remove_file(config_file).expect("temp config file should be deletable");
-        }
 
         return test_config_dir_provider;
     }
