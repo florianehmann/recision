@@ -9,6 +9,7 @@ pub fn build_cli() -> Command {
         .subcommand(
             Command::new("workspace")
                 .about("Manage workspaces")
+                .alias("ws")
                 .subcommand_required(false)
                 .subcommand(
                     Command::new("activate")
