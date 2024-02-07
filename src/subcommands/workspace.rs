@@ -19,7 +19,13 @@ impl fmt::Display for WorkspaceError {
 impl Error for WorkspaceError {}
 
 pub fn activate(path: PathBuf, config: &mut Config) -> Result<()> {
-    config.set_workspace(path.absolutize().unwrap().to_path_buf())?;
+    config.set_workspace(Some(path.absolutize().unwrap().to_path_buf()))?;
+
+    return Ok(());
+}
+
+pub fn deactivate(config: &mut Config) -> Result<()> {
+    config.set_workspace(None)?;
 
     return Ok(());
 }

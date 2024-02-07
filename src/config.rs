@@ -55,19 +55,19 @@ impl Config {
         return &self.active_workspace;
     }
 
-    pub fn set_workspace(&mut self, path: PathBuf) -> Result<()> {
-        if !path.exists() {
+    pub fn set_workspace(&mut self, path: Option<PathBuf>) -> Result<()> {
+        if path.as_ref().is_some_and(|path| !path.exists()) {
             return Err(io::Error::new(
                 io::ErrorKind::NotFound,
                 format!(
                     "workspace directory '{}' does not exist",
-                    path.to_str().unwrap()
+                    path.unwrap().to_str().unwrap()
                 ),
             )
             .into());
         }
 
-        self.active_workspace = Some(path);
+        self.active_workspace = path;
         self.write_to_file(get_config_file_path(&DefaultConfigDirProvider {})?)?;
 
         return Ok(());

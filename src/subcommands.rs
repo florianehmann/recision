@@ -20,8 +20,7 @@ pub fn run_workspace(matches: &ArgMatches) -> Result<()> {
             todo!();
         }
         Some(("deactivate", _)) => {
-            println!("Deactivating workspace");
-            todo!();
+            workspace::deactivate(&mut config)?;
         }
         _ => {
             workspace::status(&mut config)?;
