@@ -18,9 +18,11 @@ fn test_workspace_status() -> Result<()> {
             ),
         ],
         || {
-            build_command().unwrap().arg("workspace").assert().success();
+            build_command()?.arg("workspace").assert().success();
+
+            Ok(())
         },
-    );
+    )?;
 
     Ok(())
 }
@@ -37,30 +39,29 @@ fn test_workspace_activate() -> Result<()> {
             ),
         ],
         || {
-            build_command()
-                .unwrap()
+            build_command()?
                 .arg("workspace")
                 .arg("deactivate")
                 .assert()
                 .success();
 
-            build_command()
-                .unwrap()
+            build_command()?
                 .arg("workspace")
                 .arg("activate")
                 .arg(temp_dir_path)
                 .assert()
                 .success();
 
-            build_command()
-                .unwrap()
+            build_command()?
                 .arg("workspace")
                 .assert()
                 .stdout(contains(
                     temp_dir_path.file_name().unwrap().to_str().unwrap(),
                 ));
+            
+            Ok(())
         },
-    );
+    )?;
 
     Ok(())
 }
@@ -77,29 +78,28 @@ fn test_workspace_deactivate() -> Result<()> {
             ),
         ],
         || {
-            build_command()
-                .unwrap()
+            build_command()?
                 .arg("workspace")
                 .arg("activate")
                 .arg(temp_dir.path().as_os_str())
                 .assert()
                 .success();
 
-            build_command()
-                .unwrap()
+            build_command()?
                 .arg("workspace")
                 .arg("deactivate")
                 .assert()
                 .success();
 
-            build_command()
-                .unwrap()
+            build_command()?
                 .arg("workspace")
                 .assert()
                 .success()
                 .stdout(contains("No active workspace"));
+
+            Ok(())
         },
-    );
+    )?;
 
     Ok(())
 }
