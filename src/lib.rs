@@ -7,7 +7,7 @@ use std::{
 use ::anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Workspace {
     projects: Vec<Project>,
 }
@@ -48,7 +48,7 @@ impl Workspace {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Project {
     name: String,
 }
@@ -72,8 +72,6 @@ mod tests {
 
         workspace
             .add_project(Project::new("Project 1"))
-            .add_project(Project::new("Project 2"))
-            .add_project(Project::new("Project 3"))
             .add_project(Project::new("Project ="))
             .add_project(Project::new("Project [toml]"))
             .add_project(Project::new("Project\nNewline"));
@@ -103,9 +101,9 @@ mod tests {
             .write_to_file(temp_file.path().to_path_buf())
             .unwrap();
 
-        let reconstructed_workspace = Workspace::read_from_file(temp_file.path().to_path_buf())
-            .unwrap();
+        let reconstructed_workspace =
+            Workspace::read_from_file(temp_file.path().to_path_buf()).unwrap();
 
-        println!("{:?}", reconstructed_workspace);
+        assert_eq!(workspace, reconstructed_workspace);
     }
 }
