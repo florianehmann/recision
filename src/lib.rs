@@ -1,5 +1,7 @@
+use core::fmt;
 use std::{
     collections::HashMap,
+    fmt::{Display, Formatter},
     fs::{remove_file, File},
     io::{Read, Write},
     path::PathBuf,
@@ -7,6 +9,25 @@ use std::{
 
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
+
+#[derive(Debug)]
+pub struct RecicionError {
+    message: String,
+}
+
+impl RecicionError {
+    pub fn new(message: String) -> Self {
+        return Self { message };
+    }
+}
+
+impl Display for RecicionError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+
+impl std::error::Error for RecicionError {}
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Workspace {
@@ -37,10 +58,19 @@ impl Workspace {
     }
 
     pub fn get_project(&mut self, name: &str) -> Option<&mut Project> {
-        self.projects
+        return self
+            .projects
             .iter_mut()
             .filter(|project| project.name == name)
-            .next()
+            .next();
+    }
+
+    pub fn get_criterion(&mut self, name: &str) -> Option<&mut Criterion> {
+        return self
+            .criteria
+            .iter_mut()
+            .filter(|criterion| criterion.name == name)
+            .next();
     }
 
     pub fn write_to_file(&self, path: PathBuf) -> Result<()> {
@@ -64,6 +94,43 @@ impl Workspace {
             .with_context(|| "parsing contents wof workspace file")?;
 
         return Ok(workspace);
+    }
+
+    pub fn set_weight(
+        &mut self,
+        project_name: &str,
+        criterion_name: &str,
+        weight: i32,
+    ) -> Result<()> {
+        self.get_criterion(criterion_name)
+            .ok_or(RecicionError::new(format!(
+                "no criterion {}",
+                criterion_name
+            )))?;
+
+        self.get_project(project_name)
+            .ok_or(RecicionError::new(format!("no project {}", project_name)))?
+            .weights
+            .insert(criterion_name.into(), weight);
+
+        return Ok(());
+    }
+
+    pub fn get_weight(&mut self, project_name: &str, criterion_name: &str) -> Result<i32> {
+        self.get_criterion(criterion_name)
+            .ok_or(RecicionError::new(format!(
+                "no criterion {}",
+                criterion_name
+            )))?;
+
+        return Ok(self
+            .get_project(project_name)
+            .ok_or(RecicionError::new(format!("no project {}", project_name)))?
+            .weights
+            .get(criterion_name)
+            .or(Some(&0))
+            .unwrap()
+            .clone());
     }
 
     pub fn calculate_score(&self) -> Option<HashMap<String, f64>> {
@@ -161,14 +228,11 @@ mod tests {
             .add_criterion(Criterion::new("Fun"))
             .add_criterion(Criterion::new("Useful"));
 
-        // TODO adjust weights
-        // let mut proj1 = workspace.get_project("Project 1");
-
         return workspace;
     }
 
     #[test]
-    fn test_buildin_workpace() {
+    fn test_building_workpace() {
         let _ = build_test_workspace();
     }
 
@@ -193,5 +257,53 @@ mod tests {
             Workspace::read_from_file(temp_file.path().to_path_buf()).unwrap();
 
         assert_eq!(workspace, reconstructed_workspace);
+    }
+
+    #[test]
+    fn test_set_weight() {
+        let mut ws = build_test_workspace();
+        ws.set_weight("Project 1", "Fun", 1).unwrap();
+    }
+
+    #[test]
+    fn test_set_weight_fail_project() {
+        let mut ws = build_test_workspace();
+        let result = ws.set_weight("Project 11", "Fun", 1);
+        assert_eq!(result.is_err(), true);
+    }
+
+    #[test]
+    fn test_set_weight_fail_criterion() {
+        let mut ws = build_test_workspace();
+        let result = ws.set_weight("Project 1", "Funn", 1);
+        assert_eq!(result.is_err(), true);
+    }
+
+    #[test]
+    fn test_get_existing_weight() {
+        let mut ws = build_test_workspace();
+        let weight = 1;
+        ws.set_weight("Project 1", "Fun", weight).unwrap();
+        assert_eq!(weight, ws.get_weight("Project 1", "Fun").unwrap());
+    }
+
+    #[test]
+    fn test_get_default_weight() {
+        let mut ws = build_test_workspace();
+        assert_eq!(0, ws.get_weight("Project 1", "Fun").unwrap());
+    }
+
+    #[test]
+    fn test_get_weight_fail_project() {
+        let mut ws = build_test_workspace();
+        let result = ws.get_weight("Project 11", "Fun");
+        assert_eq!(result.is_err(), true);
+    }
+
+    #[test]
+    fn test_get_weight_fail_criterion() {
+        let mut ws = build_test_workspace();
+        let result = ws.get_weight("Project 1", "Funn");
+        assert_eq!(result.is_err(), true);
     }
 }
