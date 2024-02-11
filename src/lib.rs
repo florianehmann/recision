@@ -1,5 +1,5 @@
 use std::{
-    collections::BTreeMap,
+    collections::HashMap,
     fs::{remove_file, File},
     io::{Read, Write},
     path::PathBuf,
@@ -66,32 +66,32 @@ impl Workspace {
         return Ok(workspace);
     }
 
-    pub fn calculate_score(&self) -> Option<BTreeMap<Project, f64>> {
+    pub fn calculate_score(&self) -> Option<HashMap<String, f64>> {
         let Some(priority_set) = self.active_priority_set.as_ref() else {
             return None;
         };
 
-        let mut result = BTreeMap::new();
+        let mut result = HashMap::new();
         self.projects.iter().for_each(|project| {
             let score = project.calculate_score(&self.criteria, &priority_set);
-            result.insert(project.clone(), score);
+            result.insert(project.name.clone(), score);
         });
 
         return Some(result);
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Project {
     name: String,
-    weights: BTreeMap<Criterion, i32>,
+    weights: HashMap<String, i32>,
 }
 
 impl Project {
     pub fn new(name: &str) -> Self {
         return Self {
             name: String::from(name),
-            weights: BTreeMap::new(),
+            weights: HashMap::new(),
         };
     }
 
@@ -101,10 +101,10 @@ impl Project {
             // TODO define default priority in the configuration
             let priority = priority_set
                 .priorities
-                .get(criterion)
+                .get(&criterion.name)
                 .or(Some(&1.0))
                 .unwrap();
-            let weight = self.weights.get(criterion).or(Some(&0)).unwrap();
+            let weight = self.weights.get(&criterion.name).or(Some(&0)).unwrap();
 
             score += *weight as f64 * priority;
         });
@@ -113,7 +113,7 @@ impl Project {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Criterion {
     name: String,
 }
@@ -129,14 +129,14 @@ impl Criterion {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PrioritySet {
     name: String,
-    priorities: BTreeMap<Criterion, f64>,
+    priorities: HashMap<String, f64>,
 }
 
 impl PrioritySet {
     pub fn new(name: &str) -> Self {
         return Self {
             name: String::from(name),
-            priorities: BTreeMap::new(),
+            priorities: HashMap::new(),
         };
     }
 }
@@ -162,7 +162,7 @@ mod tests {
             .add_criterion(Criterion::new("Useful"));
 
         // TODO adjust weights
-        let mut proj1 = workspace.get_project("Project 1");
+        // let mut proj1 = workspace.get_project("Project 1");
 
         return workspace;
     }
