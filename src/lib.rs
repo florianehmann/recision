@@ -7,7 +7,7 @@ use std::{
     path::PathBuf,
 };
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Ok, Result};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]
@@ -29,12 +29,12 @@ impl Display for RecicionError {
 
 impl std::error::Error for RecicionError {}
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Workspace {
     projects: Vec<Project>,
     criteria: Vec<Criterion>,
     priority_sets: Vec<PrioritySet>,
-    active_priority_set: Option<PrioritySet>,
+    active_priority_set: Option<String>,
 }
 
 impl Workspace {
@@ -71,6 +71,31 @@ impl Workspace {
             .iter_mut()
             .filter(|criterion| criterion.name == name)
             .next();
+    }
+
+    pub fn add_priority_set(&mut self, name: &str) -> Result<&mut Self> {
+        if self.get_priority_set(name).is_some() {
+            return Err(RecicionError::new(format!("priority set {} already exists", name)).into());
+        }
+
+        let ps = PrioritySet::new(name);
+        self.priority_sets.push(ps);
+
+        return Ok(self);
+    }
+
+    pub fn get_priority_set(&self, name: &str) -> Option<&PrioritySet> {
+        return self
+            .priority_sets
+            .iter()
+            .filter(|ps| ps.name == name)
+            .next();
+    }
+
+    pub fn activate_priority_set(&mut self, name: &str) -> Result<()> {
+        self.get_priority_set(name).ok_or(RecicionError::new(format!("no priority set {}", name)))?;
+        self.active_priority_set = Some(name.into());
+        return Ok(());
     }
 
     pub fn write_to_file(&self, path: PathBuf) -> Result<()> {
@@ -133,10 +158,9 @@ impl Workspace {
             .clone());
     }
 
-    pub fn calculate_score(&self) -> Option<HashMap<String, f64>> {
-        let Some(priority_set) = self.active_priority_set.as_ref() else {
-            return None;
-        };
+    pub fn calculate_score(&self) -> Result<HashMap<String, f64>> {
+        let priority_set_name = self.active_priority_set.clone().ok_or(RecicionError::new("no active priority set".into()))?;
+        let priority_set = self.get_priority_set(priority_set_name.as_str()).expect("active priority set should be in the collections of priority sets");
 
         let mut result = HashMap::new();
         self.projects.iter().for_each(|project| {
@@ -144,7 +168,7 @@ impl Workspace {
             result.insert(project.name.clone(), score);
         });
 
-        return Some(result);
+        return Ok(result);
     }
 }
 
@@ -228,6 +252,10 @@ mod tests {
             .add_criterion(Criterion::new("Fun"))
             .add_criterion(Criterion::new("Useful"));
 
+        workspace
+            .add_priority_set("Workday").unwrap()
+            .add_priority_set("Weekend").unwrap();
+
         return workspace;
     }
 
@@ -305,5 +333,19 @@ mod tests {
         let mut ws = build_test_workspace();
         let result = ws.get_weight("Project 1", "Funn");
         assert_eq!(result.is_err(), true);
+    }
+
+    #[test]
+    fn test_calculate_score() {
+        let mut ws = build_test_workspace();
+
+        ws.set_weight("Project 1", "Fun", 1).unwrap();
+        ws.set_weight("Project 1", "Useful", -1).unwrap();
+
+        ws.set_weight("Project 2", "Fun", 2).unwrap();
+
+        ws.activate_priority_set("Weekday").unwrap();
+
+        ws.calculate_score().unwrap();
     }
 }
