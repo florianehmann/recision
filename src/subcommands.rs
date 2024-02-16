@@ -11,12 +11,12 @@ pub fn run_workspace(matches: &ArgMatches) -> Result<()> {
     let mut config = get_configuration(&DefaultConfigDirProvider {})?;
     match matches.subcommand() {
         Some(("activate", argmatches)) => {
-            let dir = PathBuf::from(argmatches.get_one::<String>("DIR").expect("required"));
-            workspace::activate(dir, &mut config)?;
+            let file = PathBuf::from(argmatches.get_one::<String>("FILE").expect("required"));
+            workspace::activate(file, &mut config)?;
         }
         Some(("new", argmatches)) => {
-            let dir = argmatches.get_one::<String>("DIR").expect("required");
-            println!("Creating workspace {dir}");
+            let file = argmatches.get_one::<String>("FILE").expect("required");
+            println!("Creating workspace {file}");
             todo!();
         }
         Some(("deactivate", _)) => {

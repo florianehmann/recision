@@ -21,13 +21,13 @@ impl Error for WorkspaceError {}
 pub fn activate(path: PathBuf, config: &mut Config) -> Result<()> {
     config.set_workspace(Some(path.absolutize().unwrap().to_path_buf()))?;
 
-    return Ok(());
+    Ok(())
 }
 
 pub fn deactivate(config: &mut Config) -> Result<()> {
     config.set_workspace(None)?;
 
-    return Ok(());
+    Ok(())
 }
 
 pub fn status(config: &mut Config) -> Result<()> {
@@ -36,5 +36,5 @@ pub fn status(config: &mut Config) -> Result<()> {
         None => println!("No active workspace"),
     }
 
-    return Ok(());
+    Ok(())
 }

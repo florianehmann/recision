@@ -15,13 +15,13 @@ pub fn build_cli() -> Command {
                     Command::new("activate")
                         .alias("a")
                         .about("Opens a workspace")
-                        .arg(arg!(<DIR> "The workspace directory"))
+                        .arg(arg!(<FILE> "The workspace file"))
                 )
                 .subcommand(
                     Command::new("new")
                         .about("Creates a new workspace")
                         .alias("n")
-                        .arg(arg!(<DIR> "The workspace directory"))
+                        .arg(arg!(<FILE> "The workspace file"))
                 )
                 .subcommand(
                     Command::new("deactivate")
