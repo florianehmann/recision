@@ -120,7 +120,8 @@ impl Workspace {
     }
 
     pub fn read_from_file(path: PathBuf) -> Result<Self> {
-        let mut file = File::open(path.clone()).with_context(|| "opening workspace file")?;
+        let mut file = File::open(path.clone())
+            .with_context(|| format!("opening workspace file {}", path.to_str().unwrap()))?;
         let mut toml_string = String::new();
         file.read_to_string(&mut toml_string)
             .with_context(|| "reading workspace from file")?;

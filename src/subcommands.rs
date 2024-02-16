@@ -15,9 +15,8 @@ pub fn run_workspace(matches: &ArgMatches) -> Result<()> {
             workspace::activate(file, &mut config)?;
         }
         Some(("new", argmatches)) => {
-            let file = argmatches.get_one::<String>("FILE").expect("required");
-            println!("Creating workspace {file}");
-            todo!();
+            let file = PathBuf::from(argmatches.get_one::<String>("FILE").expect("required"));
+            workspace::new(file, &mut config)?;
         }
         Some(("deactivate", _)) => {
             workspace::deactivate(&mut config)?;
