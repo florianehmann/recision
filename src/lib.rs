@@ -101,7 +101,8 @@ impl Workspace {
     }
 
     pub fn activate_priority_set(&mut self, name: &str) -> Result<()> {
-        self.get_priority_set(name).ok_or(RecicionError::new(format!("no priority set {}", name)))?;
+        self.get_priority_set(name)
+            .ok_or(RecicionError::new(format!("no priority set {}", name)))?;
         self.active_priority_set = Some(name.into());
         return Ok(());
     }
@@ -173,17 +174,29 @@ impl Workspace {
                 criterion_name
             )))?;
 
-        let priority_set_name = self.active_priority_set.clone().ok_or(RecicionError::new("no active priority set".into()))?;
-        let priority_set = self.get_priority_set_mut(priority_set_name.as_str()).expect("active priority set should be in the collections of priority sets");
+        let priority_set_name = self
+            .active_priority_set
+            .clone()
+            .ok_or(RecicionError::new("no active priority set".into()))?;
+        let priority_set = self
+            .get_priority_set_mut(priority_set_name.as_str())
+            .expect("active priority set should be in the collections of priority sets");
 
-        priority_set.priorities.insert(criterion_name.into(), priority);
+        priority_set
+            .priorities
+            .insert(criterion_name.into(), priority);
 
         return Ok(());
     }
 
     pub fn calculate_score(&self) -> Result<HashMap<String, f64>> {
-        let priority_set_name = self.active_priority_set.clone().ok_or(RecicionError::new("no active priority set".into()))?;
-        let priority_set = self.get_priority_set(priority_set_name.as_str()).expect("active priority set should be in the collections of priority sets");
+        let priority_set_name = self
+            .active_priority_set
+            .clone()
+            .ok_or(RecicionError::new("no active priority set".into()))?;
+        let priority_set = self
+            .get_priority_set(priority_set_name.as_str())
+            .expect("active priority set should be in the collections of priority sets");
 
         let mut result = HashMap::new();
         self.projects.iter().for_each(|project| {
@@ -276,8 +289,10 @@ mod tests {
             .add_criterion(Criterion::new("Useful"));
 
         workspace
-            .add_priority_set("Workday").unwrap()
-            .add_priority_set("Weekend").unwrap();
+            .add_priority_set("Workday")
+            .unwrap()
+            .add_priority_set("Weekend")
+            .unwrap();
 
         workspace.activate_priority_set("Workday").unwrap();
         workspace.set_priority("Fun", 1.0).unwrap();
