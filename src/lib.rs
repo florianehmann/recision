@@ -92,6 +92,14 @@ impl Workspace {
             .next();
     }
 
+    pub fn get_priority_set_mut(&mut self, name: &str) -> Option<&mut PrioritySet> {
+        return self
+            .priority_sets
+            .iter_mut()
+            .filter(|ps| ps.name == name)
+            .next();
+    }
+
     pub fn activate_priority_set(&mut self, name: &str) -> Result<()> {
         self.get_priority_set(name).ok_or(RecicionError::new(format!("no priority set {}", name)))?;
         self.active_priority_set = Some(name.into());
@@ -156,6 +164,21 @@ impl Workspace {
             .or(Some(&0))
             .unwrap()
             .clone());
+    }
+
+    pub fn set_priority(&mut self, criterion_name: &str, priority: f64) -> Result<()> {
+        self.get_criterion(criterion_name)
+            .ok_or(RecicionError::new(format!(
+                "no criterion {}",
+                criterion_name
+            )))?;
+
+        let priority_set_name = self.active_priority_set.clone().ok_or(RecicionError::new("no active priority set".into()))?;
+        let priority_set = self.get_priority_set_mut(priority_set_name.as_str()).expect("active priority set should be in the collections of priority sets");
+
+        priority_set.priorities.insert(criterion_name.into(), priority);
+
+        return Ok(());
     }
 
     pub fn calculate_score(&self) -> Result<HashMap<String, f64>> {
@@ -256,6 +279,14 @@ mod tests {
             .add_priority_set("Workday").unwrap()
             .add_priority_set("Weekend").unwrap();
 
+        workspace.activate_priority_set("Workday").unwrap();
+        workspace.set_priority("Fun", 1.0).unwrap();
+        workspace.set_priority("Useful", 2.0).unwrap();
+
+        workspace.activate_priority_set("Weekend").unwrap();
+        workspace.set_priority("Fun", 2.0).unwrap();
+        workspace.set_priority("Useful", 1.0).unwrap();
+
         return workspace;
     }
 
@@ -344,8 +375,19 @@ mod tests {
 
         ws.set_weight("Project 2", "Fun", 2).unwrap();
 
-        ws.activate_priority_set("Weekday").unwrap();
+        ws.activate_priority_set("Workday").unwrap();
 
-        ws.calculate_score().unwrap();
+        let scores = ws.calculate_score().unwrap();
+
+        assert_eq!(*scores.get("Project 1").unwrap(), -1.0);
+        assert_eq!(*scores.get("Project 2").unwrap(), 2.0);
+
+        ws.activate_priority_set("Weekend").unwrap();
+
+        let scores = ws.calculate_score().unwrap();
+        println!("{:?}", scores);
+
+        assert_eq!(*scores.get("Project 1").unwrap(), 1.0);
+        assert_eq!(*scores.get("Project 2").unwrap(), 4.0);
     }
 }
