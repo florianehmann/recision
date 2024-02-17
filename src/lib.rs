@@ -65,6 +65,10 @@ impl Workspace {
             .next();
     }
 
+    pub fn get_project_names(&self) -> Vec<String> {
+        self.projects.iter().map(|p| p.name.clone()).collect()
+    }
+
     pub fn get_criterion(&mut self, name: &str) -> Option<&mut Criterion> {
         return self
             .criteria
@@ -114,6 +118,7 @@ impl Workspace {
 
         let toml_string = toml::to_string_pretty(self)?;
         let mut file = File::create(path.clone()).with_context(|| "creating new workspace file")?;
+        println!("{toml_string}");
         file.write_all(toml_string.as_bytes())?;
 
         return Ok(());

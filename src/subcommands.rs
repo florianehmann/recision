@@ -2,7 +2,10 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use clap::ArgMatches;
+use path_absolutize::Absolutize;
+use recision::{RecicionError, Workspace};
 
+mod project;
 mod workspace;
 
 use crate::config::{get_configuration, DefaultConfigDirProvider};
@@ -30,11 +33,19 @@ pub fn run_workspace(matches: &ArgMatches) -> Result<()> {
 }
 
 pub fn run_project(matches: &ArgMatches) -> Result<()> {
+    let config = get_configuration(&DefaultConfigDirProvider {})?;
+    let mut workspace = Workspace::read_from_file(
+        config
+            .get_workspace()
+            .clone()
+            .ok_or(RecicionError::new("no active workspace".into()))?
+            .absolutize()
+            .unwrap()
+            .to_path_buf(),
+    )?;
+
     match matches.subcommand() {
-        Some(("list", _)) => {
-            println!("Listing projects");
-            todo!();
-        }
+        Some(("list", _)) => project::list(workspace),
         Some(("add", argmatches)) => {
             let project = argmatches
                 .get_one::<String>("PROJECT_NAME")
