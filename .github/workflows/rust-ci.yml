@@ -1,12 +1,12 @@
 name: CI
 
 on:
-	push:
+  push:
     branches:
       - develop
 
 jobs:
-	build:
+  build:
     runs-on: ubuntu-latest
       
     steps:
