@@ -34,6 +34,7 @@ pub fn run_workspace(matches: &ArgMatches) -> Result<()> {
 
 pub fn run_project(matches: &ArgMatches) -> Result<()> {
     let config = get_configuration(&DefaultConfigDirProvider {})?;
+    #[allow(unused_mut)] // TODO shut clippy up for now
     let mut workspace = Workspace::read_from_file(
         config
             .get_workspace()

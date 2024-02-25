@@ -4,7 +4,7 @@ use recision::Workspace;
 pub fn list(workspace: Workspace) -> Result<()> {
     let projects = workspace.get_project_names();
 
-    if projects.len() == 0 {
+    if projects.is_empty() {
         println!("No projects in workspace");
         return Ok(());
     }

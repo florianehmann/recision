@@ -11,19 +11,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::test_utils;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Config {
     active_workspace: Option<PathBuf>,
     active_priority_set: Option<usize>,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        return Config {
-            active_workspace: None,
-            active_priority_set: None,
-        };
-    }
 }
 
 impl Config {
@@ -36,7 +27,7 @@ impl Config {
         let mut file = File::create(path)?;
         file.write_all(toml_string.as_bytes())?;
 
-        return Ok(());
+        Ok(())
     }
 
     fn read_from_file(path: PathBuf) -> Result<Self> {
@@ -50,11 +41,11 @@ impl Config {
             )
         })?;
 
-        return Ok(config);
+        Ok(config)
     }
 
     pub fn get_workspace(&self) -> &Option<PathBuf> {
-        return &self.active_workspace;
+        &self.active_workspace
     }
 
     pub fn set_workspace(&mut self, path: Option<PathBuf>) -> Result<()> {
@@ -72,7 +63,7 @@ impl Config {
         self.active_workspace = path;
         self.write_to_file(get_config_file_path(&DefaultConfigDirProvider {})?)?;
 
-        return Ok(());
+        Ok(())
     }
 }
 
@@ -101,20 +92,20 @@ impl ConfigDirProvider for DefaultConfigDirProvider {
         if test_utils::test_config_dir_is_set() {
             return Some(
                 test_utils::config_dir()
-                    .expect(format!("{} not set", test_utils::TEST_CONFIG_DIR).as_str()),
+                    .unwrap_or_else(|_| panic!("{} not set", test_utils::TEST_CONFIG_DIR)),
             );
         }
-        return config_dir();
+        config_dir()
     }
 }
 
 fn get_config_dir(provider: &dyn ConfigDirProvider) -> Result<PathBuf> {
-    return provider.get_config_dir().ok_or(
+    provider.get_config_dir().ok_or(
         (ConfigError {
             message: "can't locate config directory".to_string(),
         })
         .into(),
-    );
+    )
 }
 
 fn get_config_file_path(config_dir_provider: &dyn ConfigDirProvider) -> Result<PathBuf> {
@@ -122,7 +113,7 @@ fn get_config_file_path(config_dir_provider: &dyn ConfigDirProvider) -> Result<P
         .join("recision")
         .join("config.toml");
 
-    return Ok(dir);
+    Ok(dir)
 }
 
 pub fn get_configuration(config_dir_provider: &dyn ConfigDirProvider) -> Result<Config> {
@@ -138,7 +129,7 @@ pub fn get_configuration(config_dir_provider: &dyn ConfigDirProvider) -> Result<
 
     let config = Config::read_from_file(path).context("error while reading config file")?;
 
-    return Ok(config);
+    Ok(config)
 }
 
 #[cfg(test)]
@@ -151,7 +142,7 @@ mod tests {
             .expect_get_config_dir()
             .return_const(std::env::temp_dir());
 
-        return test_config_dir_provider;
+        test_config_dir_provider
     }
 
     #[test]

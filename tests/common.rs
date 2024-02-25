@@ -13,7 +13,5 @@ pub fn build_command() -> Result<Command> {
 
 #[allow(dead_code)]
 pub fn create_test_config_dir() -> Result<TempDir> {
-    let temp_dir = tempdir()?;
-
-    return Ok(temp_dir);
+    Ok(tempdir()?)
 }

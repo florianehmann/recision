@@ -17,7 +17,7 @@ pub struct RecicionError {
 
 impl RecicionError {
     pub fn new(message: String) -> Self {
-        return Self { message };
+        Self { message }
     }
 }
 
@@ -39,30 +39,28 @@ pub struct Workspace {
 
 impl Workspace {
     pub fn new() -> Self {
-        return Self {
+        Self {
             projects: Vec::new(),
             criteria: Vec::new(),
             priority_sets: Vec::new(),
             active_priority_set: None,
-        };
+        }
     }
 
     pub fn add_project(&mut self, project: Project) -> &mut Self {
         self.projects.push(project);
-        return self;
+        self
     }
 
     pub fn add_criterion(&mut self, criterion: Criterion) -> &mut Self {
         self.criteria.push(criterion);
-        return self;
+        self
     }
 
     pub fn get_project(&mut self, name: &str) -> Option<&mut Project> {
-        return self
-            .projects
+        self.projects
             .iter_mut()
-            .filter(|project| project.name == name)
-            .next();
+            .find(|project| project.name == name)
     }
 
     pub fn get_project_names(&self) -> Vec<String> {
@@ -70,11 +68,9 @@ impl Workspace {
     }
 
     pub fn get_criterion(&mut self, name: &str) -> Option<&mut Criterion> {
-        return self
-            .criteria
+        self.criteria
             .iter_mut()
-            .filter(|criterion| criterion.name == name)
-            .next();
+            .find(|criterion| criterion.name == name)
     }
 
     pub fn add_priority_set(&mut self, name: &str) -> Result<&mut Self> {
@@ -85,30 +81,22 @@ impl Workspace {
         let ps = PrioritySet::new(name);
         self.priority_sets.push(ps);
 
-        return Ok(self);
+        Ok(self)
     }
 
     pub fn get_priority_set(&self, name: &str) -> Option<&PrioritySet> {
-        return self
-            .priority_sets
-            .iter()
-            .filter(|ps| ps.name == name)
-            .next();
+        self.priority_sets.iter().find(|ps| ps.name == name)
     }
 
     pub fn get_priority_set_mut(&mut self, name: &str) -> Option<&mut PrioritySet> {
-        return self
-            .priority_sets
-            .iter_mut()
-            .filter(|ps| ps.name == name)
-            .next();
+        self.priority_sets.iter_mut().find(|ps| ps.name == name)
     }
 
     pub fn activate_priority_set(&mut self, name: &str) -> Result<()> {
         self.get_priority_set(name)
             .ok_or(RecicionError::new(format!("no priority set {}", name)))?;
         self.active_priority_set = Some(name.into());
-        return Ok(());
+        Ok(())
     }
 
     pub fn write_to_file(&self, path: PathBuf) -> Result<()> {
@@ -121,7 +109,7 @@ impl Workspace {
         println!("{toml_string}");
         file.write_all(toml_string.as_bytes())?;
 
-        return Ok(());
+        Ok(())
     }
 
     pub fn read_from_file(path: PathBuf) -> Result<Self> {
@@ -130,10 +118,10 @@ impl Workspace {
         let mut toml_string = String::new();
         file.read_to_string(&mut toml_string)
             .with_context(|| "reading workspace from file")?;
-        let workspace = toml::from_str(&toml_string.as_str())
+        let workspace = toml::from_str(toml_string.as_str())
             .with_context(|| "parsing contents wof workspace file")?;
 
-        return Ok(workspace);
+        Ok(workspace)
     }
 
     pub fn set_weight(
@@ -153,7 +141,7 @@ impl Workspace {
             .weights
             .insert(criterion_name.into(), weight);
 
-        return Ok(());
+        Ok(())
     }
 
     pub fn get_weight(&mut self, project_name: &str, criterion_name: &str) -> Result<i32> {
@@ -163,14 +151,12 @@ impl Workspace {
                 criterion_name
             )))?;
 
-        return Ok(self
+        Ok(*self
             .get_project(project_name)
             .ok_or(RecicionError::new(format!("no project {}", project_name)))?
             .weights
             .get(criterion_name)
-            .or(Some(&0))
-            .unwrap()
-            .clone());
+            .unwrap_or(&0))
     }
 
     pub fn set_priority(&mut self, criterion_name: &str, priority: f64) -> Result<()> {
@@ -192,7 +178,7 @@ impl Workspace {
             .priorities
             .insert(criterion_name.into(), priority);
 
-        return Ok(());
+        Ok(())
     }
 
     pub fn calculate_score(&self) -> Result<HashMap<String, f64>> {
@@ -206,11 +192,17 @@ impl Workspace {
 
         let mut result = HashMap::new();
         self.projects.iter().for_each(|project| {
-            let score = project.calculate_score(&self.criteria, &priority_set);
+            let score = project.calculate_score(&self.criteria, priority_set);
             result.insert(project.name.clone(), score);
         });
 
-        return Ok(result);
+        Ok(result)
+    }
+}
+
+impl Default for Workspace {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -222,27 +214,23 @@ pub struct Project {
 
 impl Project {
     pub fn new(name: &str) -> Self {
-        return Self {
+        Self {
             name: String::from(name),
             weights: HashMap::new(),
-        };
+        }
     }
 
-    fn calculate_score(&self, criteria: &Vec<Criterion>, priority_set: &PrioritySet) -> f64 {
+    fn calculate_score(&self, criteria: &[Criterion], priority_set: &PrioritySet) -> f64 {
         let mut score = 0.0;
         criteria.iter().for_each(|criterion| {
             // TODO define default priority in the configuration
-            let priority = priority_set
-                .priorities
-                .get(&criterion.name)
-                .or(Some(&1.0))
-                .unwrap();
-            let weight = self.weights.get(&criterion.name).or(Some(&0)).unwrap();
+            let priority = priority_set.priorities.get(&criterion.name).unwrap_or(&1.0);
+            let weight = self.weights.get(&criterion.name).unwrap_or(&0);
 
             score += *weight as f64 * priority;
         });
 
-        return score;
+        score
     }
 }
 
@@ -253,9 +241,9 @@ pub struct Criterion {
 
 impl Criterion {
     pub fn new(name: &str) -> Self {
-        return Self {
+        Self {
             name: String::from(name),
-        };
+        }
     }
 }
 
@@ -267,10 +255,10 @@ pub struct PrioritySet {
 
 impl PrioritySet {
     pub fn new(name: &str) -> Self {
-        return Self {
+        Self {
             name: String::from(name),
             priorities: HashMap::new(),
-        };
+        }
     }
 }
 
@@ -308,7 +296,7 @@ mod tests {
         workspace.set_priority("Fun", 2.0).unwrap();
         workspace.set_priority("Useful", 1.0).unwrap();
 
-        return workspace;
+        workspace
     }
 
     #[test]
@@ -349,14 +337,14 @@ mod tests {
     fn test_set_weight_fail_project() {
         let mut ws = build_test_workspace();
         let result = ws.set_weight("Project 11", "Fun", 1);
-        assert_eq!(result.is_err(), true);
+        assert!(result.is_err());
     }
 
     #[test]
     fn test_set_weight_fail_criterion() {
         let mut ws = build_test_workspace();
         let result = ws.set_weight("Project 1", "Funn", 1);
-        assert_eq!(result.is_err(), true);
+        assert!(result.is_err());
     }
 
     #[test]
@@ -377,14 +365,14 @@ mod tests {
     fn test_get_weight_fail_project() {
         let mut ws = build_test_workspace();
         let result = ws.get_weight("Project 11", "Fun");
-        assert_eq!(result.is_err(), true);
+        assert!(result.is_err());
     }
 
     #[test]
     fn test_get_weight_fail_criterion() {
         let mut ws = build_test_workspace();
         let result = ws.get_weight("Project 1", "Funn");
-        assert_eq!(result.is_err(), true);
+        assert!(result.is_err());
     }
 
     #[test]
