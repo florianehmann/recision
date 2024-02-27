@@ -48,11 +48,13 @@ impl Workspace {
     }
 
     pub fn add_project(&mut self, project: Project) -> &mut Self {
+        // TODO check if project by the name already exists
         self.projects.push(project);
         self
     }
 
     pub fn add_criterion(&mut self, criterion: Criterion) -> &mut Self {
+        // TODO check if criterion by the name already exists
         self.criteria.push(criterion);
         self
     }

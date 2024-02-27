@@ -51,8 +51,7 @@ pub fn run_project(matches: &ArgMatches) -> Result<()> {
             let project = argmatches
                 .get_one::<String>("PROJECT_NAME")
                 .expect("required");
-            println!("Adding project {project}");
-            todo!();
+            project::add(config, workspace, project)
         }
         Some(("remove", argmatches)) => {
             let projects: Vec<_> = argmatches
