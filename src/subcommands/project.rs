@@ -25,7 +25,7 @@ pub fn add(config: Config, mut workspace: Workspace, name: &str) -> Result<()> {
     }
 
     println!("Adding project '{name}'");
-    workspace.add_project(Project::new(name));
+    workspace.add_project(Project::new(name))?;
     workspace.write_to_file(
         config
             .get_workspace()

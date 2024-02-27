@@ -47,10 +47,17 @@ impl Workspace {
         }
     }
 
-    pub fn add_project(&mut self, project: Project) -> &mut Self {
-        // TODO check if project by the name already exists
+    pub fn add_project(&mut self, project: Project) -> Result<&mut Self> {
+        if self.get_project(project.get_name()).is_some() {
+            return Err(RecicionError::new(format!(
+                "project {} already exists",
+                project.get_name()
+            ))
+            .into());
+        }
+
         self.projects.push(project);
-        self
+        Ok(self)
     }
 
     pub fn add_criterion(&mut self, criterion: Criterion) -> &mut Self {
@@ -108,7 +115,6 @@ impl Workspace {
 
         let toml_string = toml::to_string_pretty(self)?;
         let mut file = File::create(path.clone()).with_context(|| "creating new workspace file")?;
-        println!("{toml_string}");
         file.write_all(toml_string.as_bytes())?;
 
         Ok(())
@@ -222,6 +228,10 @@ impl Project {
         }
     }
 
+    pub fn get_name(&self) -> &str {
+        self.name.as_str()
+    }
+
     fn calculate_score(&self, criteria: &[Criterion], priority_set: &PrioritySet) -> f64 {
         let mut score = 0.0;
         criteria.iter().for_each(|criterion| {
@@ -275,10 +285,15 @@ mod tests {
 
         workspace
             .add_project(Project::new("Project 1"))
+            .unwrap()
             .add_project(Project::new("Project 2"))
+            .unwrap()
             .add_project(Project::new("Project ="))
+            .unwrap()
             .add_project(Project::new("Project [toml]"))
-            .add_project(Project::new("Project\nNewline"));
+            .unwrap()
+            .add_project(Project::new("Project\nNewline"))
+            .unwrap();
 
         workspace
             .add_criterion(Criterion::new("Fun"))
@@ -396,7 +411,6 @@ mod tests {
         ws.activate_priority_set("Weekend").unwrap();
 
         let scores = ws.calculate_score().unwrap();
-        println!("{:?}", scores);
 
         assert_eq!(*scores.get("Project 1").unwrap(), 1.0);
         assert_eq!(*scores.get("Project 2").unwrap(), 4.0);
